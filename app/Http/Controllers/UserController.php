@@ -2,21 +2,23 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Adresses;
+use App\Models\Person;
 use App\Models\User;
 use Exception;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Validator;
 
 class UserController extends Controller
 {
-    public function register(Request $request)
+    
+    public function store(Request $request)
     {
         
         $validator = Validator::make($request->all(), [
             'name' => 'required|min:3',
             'password' => 'required|min:6',
+            'cpf' => 'required|numeric|min:11',
             'email' => 'required|unique:users'
         ]);
 
@@ -27,47 +29,175 @@ class UserController extends Controller
             ], 400);
         }
 
-        $data = $request->all();
-        $data['password'] = bcrypt($data['password']);
-        try {
-            $user = User::create($data);
-            $token = $user->createToken('madeFy')->accessToken;
-            return response([ 'user' => $user, 'token' => $token]);
-        } catch (Exception $e) {
-            return response()->json(['message' => 'Desculpe, houve um erro ao registar usuário.', 'error' => $e->getMessage()], 400);
+        if (!$this->cpfIsValid($request->cpf)) {
+            return response()->json(['message' => 'Este CPF não é válido'], 400);
         }
+
+        $data = $request->all();
+
+        $dataAddress = isset($data['address']) ? $data['address'] : [];
+        $dataUser = array(
+            'password' => bcrypt($data['password']),
+            'name' => $data['name'],
+            'email' => $data['email']
+        );
+        $dataPerson = array(
+            'name' => $data['name'],
+            'cpf' => $data['cpf'],
+            'rg' => isset($data['rg']) ? $data['rg']: '',
+            'phone' => isset($data['phone']) ? $data['phone'] : '',
+            'is_whatsapp' => isset($data['is_whatsapp']) ? $data['is_whatsapp'] : false
+        );
         
+        try {
+            if (sizeof($dataAddress) > 0) {
+                if ( !isset($dataAddress['street']) ) {
+                    return response()->json(['message' => 'Desculpe, ao informar o endereço é necessário que informe o nome da rua.'], 400);
+                }
+                $address = Adresses::create($dataAddress);
+                $dataPerson['addres_id'] = $address->id;
+            }
+
+            $user = User::create($dataUser);
+            $dataPerson['user_id'] = $user->id;
+            
+            $person = Person::create($dataPerson);
+            
+            $person->user = $user;
+            if ($address) {
+                $person->address = $address;
+            }
+            return response([ 'user' => $person ]);
+        } catch (Exception $e) {
+            return response()->json([
+                'message' => 'Desculpe, houve um erro ao registar usuário.',
+                'error' => $e->getMessage()
+            ], 401);
+        }
         
     }
 
-    public function login(Request $request)
+
+    public function index (Request $request)
     {
+        $users = Person::with('user');
+        $perPage = $request->has('perPage') ? $request->perPage : 50;
+        $page = $request->has('page') ? $request->page : 1;
         
-        $validator = Validator::make($request->all(), [
-            'email' => 'email|required',
-            'password' => 'required'
+        if ($request->has('name')) {
+            $users->where('name', 'like', '%'. $request->name. '%');
+        }
+        
+        if ($request->has('cpf')) {
+            $users->where('cpf', 'like', '%'. $request->cpf. '%');
+        }
+
+        if ($request->has('email')) {
+            $users->whereHas('user', function ($q) use($request) {
+                $q->where('email', 'like', '%'. $request->email. '%');
+            });
+        }
+
+        if ($request->has('deleted_at')) {
+            $users->withTrashed();
+        }
+
+        return response()->json(
+            $users->paginate($perPage, '*', null, $page)
+        );
+    }
+
+    public function update ($personId, Request $request)
+    {
+
+        $data = $request->all();
+        $validator = Validator::make($data, [
+            'name' => 'required|min:3',
+            'cpf' => 'required|numeric|min:11',
+            'email' => 'required'
         ]);
 
         if ($validator->fails()) {
             return response()->json([
                 'errors' => $validator->errors()->all(), 
-                'message' => 'Desculpe, não foi possível cadastrar o usuário.'
+                'message' => 'Desculpe, não foi possível atualizar o usuário.'
             ], 400);
         }
         
-        if (Auth::attempt($request->all())) {
-            $user = Auth::user();
-            return response(['token' => $user->createToken('madeFy')->accessToken, 'user' => $user], 401);
+        if (!$this->cpfIsValid($data['cpf'])) {
+            return response()->json(['message' => 'Este CPF não é válido'], 400);
+        }     
+        
+        
+        $person = Person::findOrFail($personId);
+        $address = $person->address;
+        $user = $person->user;
+
+        $dataAddress = isset($data['address']) ? $data['address'] : [];
+        $dataUser = array(
+            'name' => $data['name'],
+            'email' => $data['email']
+        );
+
+        if (isset($data['password'])) {
+            $dataUser['password'] = bcrypt($data['password']);
         }
 
-        return response(['message' => 'usuaário e/ou senha inválidos'], 401);
+        $dataPerson = array(
+            'name' => $data['name'],
+            'cpf' => preg_replace( '/[^0-9]/is', '', $data['cpf'] ),
+            'rg' => isset($data['rg']) ? $data['rg']: '',
+            'phone' => isset($data['phone']) ? (preg_replace( '/[^0-9]/is', '', $data['phone'])) : '',
+            'is_whatsapp' => isset($data['is_whatsapp']) ? $data['is_whatsapp'] : false
+        );
+        
+        try {
+            if (sizeof($dataAddress) > 0) {
+                if ( !isset($dataAddress['street']) ) {
+                    return response()->json(['message' => 'Desculpe, ao informar o endereço é necessário que informe o nome da rua.'], 401);
+                }
+                if ($address) {
+                    $address->update($dataAddress);
+                } else {
+                    $address = Adresses::create($dataAddress);
+                }
+                
+                $dataPerson['addres_id'] = $address->id;
+            }
+
+            $user->update($dataUser);
+            $dataPerson['user_id'] = $user->id;
+            
+            $person->update($dataPerson);
+            return response([ 'user' => $person ]);
+
+        } catch (Exception $e) {
+            return response()->json([
+                'message' => 'Desculpe, houve um erro ao registar usuário.',
+                'error' => $e->getMessage()
+            ], 401);
+        }
+        
     }
 
-    public function logout (Request $request) {
-        //$token = $request->user()->token();
-        $token = auth()->user()->accessToken;
-        $token->revoke();
-        return response()->json(['message' => 'Usuário deslogado']);
+    public function destroy ($personId)
+    {
+        $person = Person::findOrFail($personId);
+        $user = $person->user;
+        try {
+            $person->delete();
+            $user->active = false;
+            $user->save();
+            return response()->json(['message' => 'Usuário deletado com sucesso']);
+        } catch (Exception $e) {
+            return response()->json(['message' => $e->getMessage()], 400);
+        }
+
+    }
+
+    public function changePassword (Request $request)
+    {
+        //
     }
 }
 
