@@ -7,6 +7,7 @@ use App\Models\Person;
 use App\Models\User;
 use Exception;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
 
 class UserController extends Controller
@@ -198,6 +199,26 @@ class UserController extends Controller
     public function changePassword (Request $request)
     {
         //
+    }
+
+    public function avatar($userId, Request $request)
+    {
+        $user = User::findOrFail($userId);
+        if ($request->File('avatar')) {
+            $extension = $request->avatar->extension();
+            //$path = Storage::disk('azure')->put('avatars/'.$user->id.'.'.$extension, $request->avatar);
+            try {
+                $path = $request->store('avatars', 'azure');
+
+                $user->avatar = $path;
+                $user->save();
+                return response()->json($user);
+            } catch (Exception $e) {
+                return response()->json($e->getMessage(), 401);
+            }
+                        
+        }
+        return response()->json(['message' => 'Erro ao atualizar imagem'], 400);
     }
 }
 

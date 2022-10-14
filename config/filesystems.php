@@ -56,6 +56,15 @@ return [
             'throw' => false,
         ],
 
+        'azure' => [ // NB This need not be set to "azure", because it's just the name of the connection - feel free to call it what you want, or even set up multiple blobs with different names
+            'driver'    => 'azure', // As this is the name of the driver, this MUST be set to "azure"
+            'sasToken'  => env('AZURE_STORAGE_SAS_TOKEN'),
+            'container' => env('AZURE_STORAGE_CONTAINER'),
+            'url'       => env('AZURE_STORAGE_URL'),
+            'prefix'    => null,
+            'endpoint'  => env('AZURE_STORAGE_ENDPOINT'),
+        ],
+
     ],
 
     /*
