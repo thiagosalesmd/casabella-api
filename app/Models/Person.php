@@ -34,4 +34,9 @@ class Person extends Model
     {
         return $this->hasOne(User::class, 'id', 'user_id');
     }
+   
+    public function attachments ()
+    {
+        return $this->hasMany(UserDocument::class, 'user_id', 'user_id');
+    }
 }

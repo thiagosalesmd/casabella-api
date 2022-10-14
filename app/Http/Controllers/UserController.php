@@ -2,11 +2,15 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\DocumentsRequest;
+use App\Http\Requests\ImageStoreRequest;
 use App\Models\Adresses;
 use App\Models\Person;
 use App\Models\User;
+use App\Models\UserDocument;
 use Exception;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
 
@@ -97,6 +101,14 @@ class UserController extends Controller
             $users->whereHas('user', function ($q) use($request) {
                 $q->where('email', 'like', '%'. $request->email. '%');
             });
+        }
+
+        if ($request->has('id')) {
+            return response()->json(
+                $users->where('id', $request->id)
+                ->with('user', 'address', 'attachments')
+                ->first()
+            );
         }
 
         if ($request->has('deleted_at')) {
@@ -196,29 +208,66 @@ class UserController extends Controller
 
     }
 
-    public function changePassword (Request $request)
-    {
-        //
-    }
+    
 
     public function avatar($userId, Request $request)
     {
+        
         $user = User::findOrFail($userId);
-        if ($request->File('avatar')) {
-            $extension = $request->avatar->extension();
-            //$path = Storage::disk('azure')->put('avatars/'.$user->id.'.'.$extension, $request->avatar);
-            try {
-                $path = $request->store('avatars', 'azure');
 
-                $user->avatar = $path;
-                $user->save();
-                return response()->json($user);
-            } catch (Exception $e) {
-                return response()->json($e->getMessage(), 401);
-            }
-                        
+        $validator = Validator::make($request->all(), [
+            'avatar' => 'required',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'errors' => $validator->errors()->all(), 
+                'message' => 'Desculpe, não foi possível atualizar foto.'
+            ], 400);
         }
+
+        try {
+            //$path = $request->file('avatar')->store('avatars', 'azure');
+
+            $user->avatar = $request->avatar;
+            $user->save();
+            return response()->json($user);
+        } catch (Exception $e) {
+            return response()->json(['error'=> $e->getMessage()], 401);
+        }
+        
         return response()->json(['message' => 'Erro ao atualizar imagem'], 400);
+    }
+
+    public function attachments($userId, Request $request)
+    {
+        $user = User::findOrFail($userId);
+
+        $validator = Validator::make($request->all(), [
+            'attachment' => 'required',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'errors' => $validator->errors()->all(), 
+                'message' => 'Desculpe, não foi possível atualizar foto.'
+            ], 400);
+        }
+
+        try {
+          
+            $document = UserDocument::create([
+                'path' => $request->attachment,
+                'user_id' => $user->id
+            ]);
+      
+            return response()->json($document);
+        } catch (Exception $e) {
+            return response()->json(['error' => $e->getMessage()], 401);
+        }
+        
+        return response()->json(['message' => 'Erro ao atualizar imagem'], 400);
+
     }
 }
 

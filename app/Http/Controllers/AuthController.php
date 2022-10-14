@@ -8,6 +8,7 @@ use App\Models\User;
 use Exception;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Validator;
 
 class AuthController extends Controller
@@ -113,6 +114,41 @@ class AuthController extends Controller
         $token = auth()->user()->accessToken;
         $token->revoke();
         return response()->json(['message' => 'Usuário deslogado']);
+    }
+
+    public function changePassword (Request $request)
+    {
+        if (Auth::guest()) {
+            return response()->json(['message' => 'Usuário não autenticado'], 400);
+        }
+        $user = Auth::user();
+        
+        $validator = Validator::make($request->all(), [
+            'current_password' => 'required',
+            'new_password' => 'required|min:6',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'errors' => $validator->errors()->all(), 
+                'message' => 'Desculpe, não foi possível atualizar sua senha.'
+            ], 400);
+        }
+
+        //if (Auth::attempt(['email' => $user->email, 'password' => $request->current_password]) ){
+            
+            $userUpdated = User::findOrFail($user->id);
+            $userUpdated->password = bcrypt($request->new_password);
+            try {
+                $userUpdated->save();
+                return response()->json(['message' => 'Senha Alterada com sucesso']);
+            } catch (Exception $e) {
+                return response()->json(['message' => $e->getMessage(), 400]);
+            }
+     //   }
+
+        //return response()->json(['message' => 'Senha inválida'], 401);
+        
     }
 
     public function me ()
