@@ -6,10 +6,13 @@ use App\Models\Adresses;
 use App\Models\Person;
 use App\Models\User;
 use Exception;
+use Illuminate\Auth\Events\PasswordReset;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Password;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Str;
 
 class AuthController extends Controller
 {
@@ -149,6 +152,59 @@ class AuthController extends Controller
 
         //return response()->json(['message' => 'Senha inválida'], 401);
         
+    }
+
+    public function forgotPassword (Request $request)
+    {
+        $request->validate(['email' => 'required|email']);
+
+        $status = Password::sendResetLink(
+            $request->only('email')
+        );
+        
+        try {
+            $reset = ($status === Password::RESET_LINK_SENT);
+            return response()->json(['status' => $status, 'reset' => $reset ]);
+        } catch (Exception $e) {
+            return response()->json(['message' => $e->getMessage()], 400);
+        }
+    }
+
+    public function resetPasswordByToken(Request $request)
+    {
+
+        $validator = Validator::make($request->all(), [
+            'token' => 'required',
+            'email' => 'required|email',
+            'password' => 'required|min:8|confirmed'
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'errors' => $validator->errors()->all(), 
+                'message' => 'Desculpe, não foi possível resetar senha'
+            ], 400);
+        }
+        try {
+            $status = Password::reset(
+                $request->only('email', 'password', 'password_confirmation', 'token'),
+                function ($user, $password) {
+                    
+                    $user->forceFill([
+                        'password' => Hash::make($password)
+                    ])->setRememberToken(Str::random(60));
+         
+                    $user->save();
+         
+                    event(new PasswordReset($user));
+                }
+            );
+            $reset = ($status === Password::PASSWORD_RESET);
+            
+            return response()->json(['status' => $status, 'reset' => $reset]);
+        } catch (Exception $e) {
+            return response()->json($e->getMessage, 400);
+        }
     }
 
     public function me ()

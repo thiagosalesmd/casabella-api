@@ -17,11 +17,14 @@ use Illuminate\Support\Facades\Route;
 
 Route::post('/register', [App\Http\Controllers\AuthController::class, 'register']);
 Route::post('/login', [App\Http\Controllers\AuthController::class, 'login'])->name("login");
+Route::post('/forgot-password', [App\Http\Controllers\AuthController::class, 'forgotPassword']);
+Route::post('/reset-password', [App\Http\Controllers\AuthController::class, 'resetPasswordByToken']);
 
 Route::middleware(['auth:api'])->group(function () {
     Route::post('/logout', [App\Http\Controllers\AuthController::class, 'logout']);
     Route::post('/change-password', [App\Http\Controllers\AuthController::class, 'changePassword']);
     Route::post('/me', [App\Http\Controllers\AuthController::class, 'me']);
+    Route::post('/send-mail', [App\Http\Controllers\EmailController::class, 'sendEmailTo']);
     
     Route::prefix('/users')->group(function () {
         Route::get('/', [App\Http\Controllers\UserController::class, 'index']);
