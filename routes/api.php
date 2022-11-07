@@ -25,7 +25,7 @@ Route::middleware(['auth:api'])->group(function () {
     Route::post('/change-password', [App\Http\Controllers\AuthController::class, 'changePassword']);
     Route::post('/me', [App\Http\Controllers\AuthController::class, 'me']);
     Route::post('/send-mail', [App\Http\Controllers\EmailController::class, 'sendEmailTo']);
-    
+
     Route::prefix('/users')->group(function () {
         Route::get('/', [App\Http\Controllers\UserController::class, 'index']);
         Route::post('/', [App\Http\Controllers\UserController::class, 'store']);
@@ -41,11 +41,39 @@ Route::middleware(['auth:api'])->group(function () {
         Route::post('/{id}', [App\Http\Controllers\GroupController::class, 'update']);
         Route::delete('/{id}', [App\Http\Controllers\GroupController::class, 'destroy']);
     });
-    
+
     Route::prefix('/permissions')->group(function () {
         Route::get('/', [App\Http\Controllers\PermissionController::class, 'index']);
         Route::post('/', [App\Http\Controllers\PermissionController::class, 'store']);
         Route::post('/{id}', [App\Http\Controllers\PermissionController::class, 'update']);
         Route::delete('/{id}', [App\Http\Controllers\PermissionController::class, 'destroy']);
+    });
+
+    Route::prefix('/terms')->group(function () {
+        Route::get('/', [App\Http\Controllers\TermController::class, 'index']);
+        Route::post('/', [App\Http\Controllers\TermController::class, 'store']);
+        Route::post('/{id}', [App\Http\Controllers\TermController::class, 'update']);
+        Route::delete('/{id}', [App\Http\Controllers\TermController::class, 'destroy']);
+    });
+
+    Route::prefix('/nft')->group(function () {
+        Route::get('/', [App\Http\Controllers\NFTController::class, 'index']);
+        Route::post('/', [App\Http\Controllers\NFTController::class, 'store']);
+        Route::post('/{id}', [App\Http\Controllers\NFTController::class, 'update']);
+        Route::delete('/{id}', [App\Http\Controllers\NFTController::class, 'destroy']);
+    });
+
+    Route::prefix('/nft-categorie')->group(function () {
+        Route::get('/', [App\Http\Controllers\NFTController::class, 'getCategorie']);
+        Route::post('/', [App\Http\Controllers\NFTController::class, 'addCategorie']);
+        Route::post('/{id}', [App\Http\Controllers\NFTController::class, 'updateCategorie']);
+        Route::delete('/{id}', [App\Http\Controllers\NFTController::class, 'removeCategorie']);
+    });
+
+    Route::prefix('/nft-classification')->group(function () {
+        Route::get('/', [App\Http\Controllers\NFTController::class, 'getClassification']);
+        Route::post('/', [App\Http\Controllers\NFTController::class, 'addClassification']);
+        Route::post('/{id}', [App\Http\Controllers\NFTController::class, 'updateClassification']);
+        Route::delete('/{id}', [App\Http\Controllers\NFTController::class, 'removeClassification']);
     });
 });
