@@ -5,6 +5,8 @@ namespace App\Http\Controllers;
 use App\Models\Campaign;
 use Exception;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Validator;
 
 class CampaignController extends Controller
@@ -27,6 +29,7 @@ class CampaignController extends Controller
 
     public function store (Request $request)
     {
+        $user = auth()->guard('api')->user();
         $data = $request->all();
 
         $validator = Validator::make($data, [
@@ -41,8 +44,9 @@ class CampaignController extends Controller
             ], 400);
         }
 
+
         try {
-            $campaign = Campaign::create($data);
+            $campaign = Campaign::create(array_merge($data, ["created_by" => $user->id] ));
             $this->syncCategorie($campaign, $data['categories']);
 
             if (isset($data['groups'])) {
@@ -58,7 +62,7 @@ class CampaignController extends Controller
 
             return response()->json($campaign);
         } catch (Exception $e) {
-            return response()->json(['message' => $e->getMessage], 400);
+            return response()->json(['message' => $e->getMessage()], 400);
         }
     }
 
@@ -67,7 +71,9 @@ class CampaignController extends Controller
         $data = $request->all();
         $validator = Validator::make($data, [
             'title' => 'required',
-            'categories' => 'required'
+            'categories' => 'required',
+            'groups' => 'required',
+            'users' => 'required'
         ]);
 
         if ($validator->fails()) {
@@ -77,28 +83,64 @@ class CampaignController extends Controller
             ], 400);
         }
 
+        $categories = $data['categories'];
+        $users = $data['users'];
+        $groups = $data['groups'];
+        unset($data['users']);
+        unset($data['groups']);
+
         try {
             $campaign = Campaign::findOrFail($campaignId);
+            $Categories = $campaign->categories;
+            $Groups = $campaign->groups;
+            $Users = $campaign->users;
+
             $campaign->update($data);
 
-            if (isset($data['categories'])) {
-                $this->syncCategorie($campaign, $data['categories']);
+            if ($Categories) {
+                $this->syncCategorie($campaign, $categories);
             }
 
-            if (isset($data['groups'])) {
-                $this->syncGroup($campaign, $data['groups']);
+            if ($Groups) {
+                $this->syncGroup($campaign, $groups);
             }
 
-            if (isset($data['users'])) {
-                $this->syncUser($campaign, $data['users']);
+            if ($Users) {
+                $this->syncUser($campaign, $users);
             }
-            $campaign->categories;
-            $campaign->groups;
-            $campaign->users;
 
             return response()->json($campaign);
         } catch (Exception $e) {
-            return response()->json(['message' => $e->getMessage], 400);
+            return response()->json(['message' => $e->getMessage()], 400);
+        }
+    }
+
+    public function destroy ($id)
+    {
+        try {
+            $campaign = Campaign::findOrFail($id);
+            $Categories = $campaign->categories;
+            $Groups = $campaign->groups;
+            $Users = $campaign->users;
+            if ($Categories) {
+                foreach ($Categories as $categorie) {
+                    $categorie->delete();
+                }
+            }
+            if ($Groups) {
+                foreach ($Groups as $group) {
+                    $group->delete();
+                }
+            }
+            if ($Users) {
+                foreach ($Users as $user) {
+                    $user->delete();
+                }
+            }
+            $campaign->delete();
+            return response()->json(['message' => 'Deletado com sucesso']);
+        } catch (Exception $e) {
+            return response()->json(['message' => $e->getMessage()], 400);
         }
     }
 
@@ -109,7 +151,7 @@ class CampaignController extends Controller
             $categories = $campaign->categories()->sync($data);
             return $categories;
         } catch (Exception $e) {
-            throw new Exception($e->getMessage());
+            return response()->json(['message' => $e->getMessage()], 400);
         }
     }
 

@@ -2,7 +2,7 @@
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
-
+use App\Http\Middleware\ValidToken;
 /*
 |--------------------------------------------------------------------------
 | API Routes
@@ -20,7 +20,7 @@ Route::post('/login', [App\Http\Controllers\AuthController::class, 'login'])->na
 Route::post('/forgot-password', [App\Http\Controllers\AuthController::class, 'forgotPassword']);
 Route::post('/reset-password', [App\Http\Controllers\AuthController::class, 'resetPasswordByToken']);
 
-Route::middleware(['auth:api'])->group(function () {
+Route::middleware([ValidToken::class])->group(function () {
     Route::post('/logout', [App\Http\Controllers\AuthController::class, 'logout']);
     Route::post('/change-password', [App\Http\Controllers\AuthController::class, 'changePassword']);
     Route::post('/me', [App\Http\Controllers\AuthController::class, 'me']);
@@ -86,9 +86,16 @@ Route::middleware(['auth:api'])->group(function () {
     });
 
     Route::prefix('/campaigns')->group(function () {
-        Route::get('/', [App\Http\Controllers\NFTController::class, 'index']);
-        Route::post('/', [App\Http\Controllers\NFTController::class, 'store']);
-        Route::put('/{id}', [App\Http\Controllers\NFTController::class, 'update']);
-        Route::delete('/{id}', [App\Http\Controllers\NFTController::class, 'delete']);
+        Route::get('/', [App\Http\Controllers\CampaignController::class, 'index']);
+        Route::post('/', [App\Http\Controllers\CampaignController::class, 'store']);
+        Route::put('/{id}', [App\Http\Controllers\CampaignController::class, 'update']);
+        Route::delete('/{id}', [App\Http\Controllers\CampaignController::class, 'destroy']);
+    });
+
+    Route::prefix('/partners')->group(function () {
+        Route::get('/', [App\Http\Controllers\PartnerController::class, 'index']);
+        Route::post('/', [App\Http\Controllers\PartnerController::class, 'store']);
+        Route::put('/{id}', [App\Http\Controllers\PartnerController::class, 'update']);
+        Route::delete('/{id}', [App\Http\Controllers\PartnerController::class, 'destroy']);
     });
 });

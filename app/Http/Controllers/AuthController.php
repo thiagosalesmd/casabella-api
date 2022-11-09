@@ -17,14 +17,9 @@ use Illuminate\Support\Str;
 class AuthController extends Controller
 {
 
-    public function __construct()
-    {
-        //$this->middleware('auth', ['except' => ['login', 'register']]);
-    }
-
     public function login(Request $request)
     {
-        
+
         $validator = Validator::make($request->all(), [
             'email' => 'email|required',
             'password' => 'required'
@@ -32,15 +27,15 @@ class AuthController extends Controller
 
         if ($validator->fails()) {
             return response()->json([
-                'errors' => $validator->errors()->all(), 
+                'errors' => $validator->errors()->all(),
                 'message' => 'Desculpe, não foi possível cadastrar o usuário.'
             ], 400);
         }
-        
+
         if (Auth::attempt($request->all())) {
             $user = Auth::user();
             return response([
-                'token' => $user->createToken('madeFy')->accessToken, 
+                'token' => $user->createToken('madeFy')->accessToken,
                 'user' => $user->person
             ], 401);
         }
@@ -50,7 +45,7 @@ class AuthController extends Controller
 
     public function register(Request $request)
     {
-        
+
         $validator = Validator::make($request->all(), [
             'name' => 'required|min:3',
             'password' => 'required|min:6',
@@ -60,15 +55,11 @@ class AuthController extends Controller
 
         if ($validator->fails()) {
             return response()->json([
-                'errors' => $validator->errors()->all(), 
+                'errors' => $validator->errors()->all(),
                 'message' => 'Desculpe, não foi possível cadastrar o usuário.'
             ], 400);
         }
-/*
-        if (!$this->validateCPF($request->cpf)) {
-            return response()->json(['message' => 'Este CPF não é válido'], 400);
-        }
-*/
+
         $data = $request->all();
 
         $dataAddress = isset($data['address']) ? $data['address'] : [];
@@ -84,7 +75,7 @@ class AuthController extends Controller
             'phone' => isset($data['phone']) ? $data['phone'] : '',
             'is_whatsapp' => isset($data['is_whatsapp']) ? $data['is_whatsapp'] : false
         );
-        
+
         try {
             if (sizeof($dataAddress) > 0) {
                 if ( !isset($dataAddress['street']) ) {
@@ -96,11 +87,11 @@ class AuthController extends Controller
 
             $user = User::create($dataUser);
             $dataPerson['user_id'] = $user->id;
-            
+
             $person = Person::create($dataPerson);
-            
+
             $token = $user->createToken('madeFy')->accessToken;
-            
+
             return response([ 'user' => $person, 'token' => $token]);
         } catch (Exception $e) {
             return response()->json([
@@ -108,13 +99,13 @@ class AuthController extends Controller
                 'error' => $e->getMessage()
             ], 401);
         }
-        
-        
+
+
     }
 
     public function logout (Request $request) {
-        //$token = $request->user()->token();
-        $token = auth()->user()->accessToken;
+
+        $token = Auth::user()->accessToken;
         $token->revoke();
         return response()->json(['message' => 'Usuário deslogado']);
     }
@@ -125,7 +116,7 @@ class AuthController extends Controller
             return response()->json(['message' => 'Usuário não autenticado'], 400);
         }
         $user = Auth::user();
-        
+
         $validator = Validator::make($request->all(), [
             'current_password' => 'required',
             'new_password' => 'required|min:6',
@@ -133,25 +124,20 @@ class AuthController extends Controller
 
         if ($validator->fails()) {
             return response()->json([
-                'errors' => $validator->errors()->all(), 
+                'errors' => $validator->errors()->all(),
                 'message' => 'Desculpe, não foi possível atualizar sua senha.'
             ], 400);
         }
 
-        //if (Auth::attempt(['email' => $user->email, 'password' => $request->current_password]) ){
-            
-            $userUpdated = User::findOrFail($user->id);
-            $userUpdated->password = bcrypt($request->new_password);
-            try {
-                $userUpdated->save();
-                return response()->json(['message' => 'Senha Alterada com sucesso']);
-            } catch (Exception $e) {
-                return response()->json(['message' => $e->getMessage(), 400]);
-            }
-     //   }
+        $userUpdated = User::findOrFail($user->id);
+        $userUpdated->password = bcrypt($request->new_password);
+        try {
+            $userUpdated->save();
+            return response()->json(['message' => 'Senha Alterada com sucesso']);
+        } catch (Exception $e) {
+            return response()->json(['message' => $e->getMessage(), 400]);
+        }
 
-        //return response()->json(['message' => 'Senha inválida'], 401);
-        
     }
 
     public function forgotPassword (Request $request)
@@ -161,7 +147,7 @@ class AuthController extends Controller
         $status = Password::sendResetLink(
             $request->only('email')
         );
-        
+
         try {
             $reset = ($status === Password::RESET_LINK_SENT);
             return response()->json(['status' => $status, 'reset' => $reset ]);
@@ -181,7 +167,7 @@ class AuthController extends Controller
 
         if ($validator->fails()) {
             return response()->json([
-                'errors' => $validator->errors()->all(), 
+                'errors' => $validator->errors()->all(),
                 'message' => 'Desculpe, não foi possível resetar senha'
             ], 400);
         }
@@ -189,18 +175,18 @@ class AuthController extends Controller
             $status = Password::reset(
                 $request->only('email', 'password', 'password_confirmation', 'token'),
                 function ($user, $password) {
-                    
+
                     $user->forceFill([
                         'password' => Hash::make($password)
                     ])->setRememberToken(Str::random(60));
-         
+
                     $user->save();
-         
+
                     event(new PasswordReset($user));
                 }
             );
             $reset = ($status === Password::PASSWORD_RESET);
-            
+
             return response()->json(['status' => $status, 'reset' => $reset]);
         } catch (Exception $e) {
             return response()->json($e->getMessage, 400);

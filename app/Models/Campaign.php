@@ -13,7 +13,8 @@ class Campaign extends Model
         'title',
         'description',
         'order',
-        'image'
+        'image',
+        'created_by'
     ];
 
     public function categories()
