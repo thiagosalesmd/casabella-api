@@ -14,7 +14,7 @@ class GroupController extends Controller
         $groups = Group::query();
         $perPage = $request->get('perPage') ? $request->perPage : 50;
         $page = $request->get('page') ? $request->page : 1;
-        
+
         if ($request->has('name')) {
             $groups->where('name', 'like', '%'. $request->name .'%');
         }
@@ -38,14 +38,14 @@ class GroupController extends Controller
 
         if ($validator->fails()) {
             return response()->json([
-                'errors' => $validator->errors()->all(), 
+                'errors' => $validator->errors()->all(),
                 'message' => 'Desculpe, não foi possível cadastrar permissão.'
             ], 400);
         }
 
         try {
-            $permission = Group::create($data);
-            return response()->json($permission);
+            $group = Group::create($data);
+            return response()->json($group);
         } catch (Exception $e) {
             return response()->json(['message' => $e->getMessage()], 400);
         }
@@ -60,15 +60,15 @@ class GroupController extends Controller
 
         if ($validator->fails()) {
             return response()->json([
-                'errors' => $validator->errors()->all(), 
+                'errors' => $validator->errors()->all(),
                 'message' => 'Desculpe, não foi possível cadastrar permissão.'
             ], 400);
         }
 
         try {
-            $permission = Group::findOrFail($permissionId);
-            $permission->update($data);
-            return response()->json($permission);
+            $group = Group::findOrFail($permissionId);
+            $group->update($group);
+            return response()->json($group);
         } catch (Exception $e) {
             return response()->json(['message' => $e->getMessage()], 400);
         }
@@ -77,7 +77,7 @@ class GroupController extends Controller
     public function destroy ($permissionId)
     {
         $permission = Group::findOrFail($permissionId);
-        
+
         try {
             $permission->rules()->detach();
             $permission->delete();
@@ -85,7 +85,7 @@ class GroupController extends Controller
         } catch (Exception $e) {
             return response()->json(['message' => $e->getMessage()], 400);
         }
-        
+
     }
 
     public function syncRules ($groupId, Request $request)
@@ -97,12 +97,12 @@ class GroupController extends Controller
 
         if ($validator->fails()) {
             return response()->json([
-                'errors' => $validator->errors()->all(), 
+                'errors' => $validator->errors()->all(),
                 'message' => 'Desculpe, não foi possível sincronizar permissões do grupo.'
             ], 400);
         }
         $group = Group::findOrFail($groupId);
-        
+
         try {
             $rules = $group->rules()->sync($data['rules']);
             return response()->json($rules);

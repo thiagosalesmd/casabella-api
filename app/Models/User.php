@@ -52,4 +52,9 @@ class User extends Authenticatable
     {
         return $this->hasOne(Person::class, 'user_id');
     }
+
+    public function categorie()
+    {
+        return $this->hasOne(Categorie::class, 'user_id', 'id');
+    }
 }

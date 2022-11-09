@@ -39,7 +39,15 @@ Route::middleware(['auth:api'])->group(function () {
         Route::get('/', [App\Http\Controllers\GroupController::class, 'index']);
         Route::post('/', [App\Http\Controllers\GroupController::class, 'store']);
         Route::post('/{id}', [App\Http\Controllers\GroupController::class, 'update']);
+        Route::put('/{id}/permissions', [App\Http\Controllers\GroupController::class, 'syncRules']);
         Route::delete('/{id}', [App\Http\Controllers\GroupController::class, 'destroy']);
+    });
+
+    Route::prefix('/categories')->group(function () {
+        Route::get('/', [App\Http\Controllers\CategorieController::class, 'index']);
+        Route::post('/', [App\Http\Controllers\CategorieController::class, 'store']);
+        Route::post('/{id}', [App\Http\Controllers\CategorieController::class, 'update']);
+        Route::delete('/{id}', [App\Http\Controllers\CategorieController::class, 'destroy']);
     });
 
     Route::prefix('/permissions')->group(function () {
@@ -75,5 +83,12 @@ Route::middleware(['auth:api'])->group(function () {
         Route::post('/', [App\Http\Controllers\NFTController::class, 'addClassification']);
         Route::post('/{id}', [App\Http\Controllers\NFTController::class, 'updateClassification']);
         Route::delete('/{id}', [App\Http\Controllers\NFTController::class, 'removeClassification']);
+    });
+
+    Route::prefix('/campaigns')->group(function () {
+        Route::get('/', [App\Http\Controllers\NFTController::class, 'index']);
+        Route::post('/', [App\Http\Controllers\NFTController::class, 'store']);
+        Route::put('/{id}', [App\Http\Controllers\NFTController::class, 'update']);
+        Route::delete('/{id}', [App\Http\Controllers\NFTController::class, 'delete']);
     });
 });
