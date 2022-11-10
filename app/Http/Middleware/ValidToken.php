@@ -19,7 +19,6 @@ class ValidToken
     public function handle(Request $request, Closure $next)
     {
         $token = $request->bearerToken();
-        $user = Auth::guard('api')->user();
 
         if (!Auth::guard('api')->check()) {
             return response()->json(['message' => 'Usuário não autenticado'], 401);
@@ -29,6 +28,11 @@ class ValidToken
             return response()->json(['message' => 'Token Inválido'], 401);
         }
 
+        $user = Auth::guard('api')->user();
+        # verificao se o usuario está bloqueado.
+        if (!$user->active) {
+            return response()->json(['message' => 'usuário bloqueado!!'], 401);
+        }
         return $next($request);
     }
 }
