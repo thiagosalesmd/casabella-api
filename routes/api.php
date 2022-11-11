@@ -98,4 +98,19 @@ Route::middleware([ValidToken::class])->group(function () {
         Route::put('/{id}', [App\Http\Controllers\PartnerController::class, 'update']);
         Route::delete('/{id}', [App\Http\Controllers\PartnerController::class, 'destroy']);
     });
+
+    Route::prefix('/tickets')->group(function () {
+        Route::get('/', [App\Http\Controllers\TicketController::class, 'index']);
+        Route::post('/', [App\Http\Controllers\TicketController::class, 'store']);
+        Route::put('/{id}', [App\Http\Controllers\TicketController::class, 'update']);
+        Route::delete('/{id}', [App\Http\Controllers\TicketController::class, 'destroy']);
+    });
+
+    Route::prefix('/posts')->group(function () {
+        Route::get('/', [App\Http\Controllers\PostController::class, 'index']);
+        Route::post('/', [App\Http\Controllers\PostController::class, 'store']);
+        Route::put('/{id}', [App\Http\Controllers\PostController::class, 'update']);
+        Route::put('/{id}/comment', [App\Http\Controllers\PostController::class, 'comment']);
+        Route::delete('/{id}', [App\Http\Controllers\PostController::class, 'destroy']);
+    });
 });
