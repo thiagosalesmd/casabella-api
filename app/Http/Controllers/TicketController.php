@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Ticket;
+use App\Models\TicketAttachment;
 use Exception;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
@@ -28,6 +29,7 @@ class TicketController extends Controller
     public function store(Request $request)
     {
         $data = $request->all();
+        $user = auth()->guard('api')->user();
         $validator = Validator::make($data, [
             'description' => 'required|min:3',
             'subject' => 'required'
@@ -40,8 +42,18 @@ class TicketController extends Controller
             ], 400);
         }
 
+        $attachments = isset($data['attachment']) ? $data['attachment'] : null;
+        unset($data['attachment']);
+
         try {
-            $ticket = Ticket::create($data);
+            $ticket = Ticket::create(array_merge($data,['user_id' => $user->id]));
+            if ($attachments) {
+                $path = $request->file('attachment')->store('public/tickets/'.$ticket->id);
+                $ticketAttachment = TicketAttachment::create([
+                    'file' => $path,
+                    'ticket_id' => $ticket->id
+                ]);
+            }
             return response()->json($ticket);
         } catch (Exception $e) {
             return response()->json(['message' => $e->getMessage()], 400);

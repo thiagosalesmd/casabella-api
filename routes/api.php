@@ -67,7 +67,8 @@ Route::middleware([ValidToken::class])->group(function () {
     Route::prefix('/nft')->group(function () {
         Route::get('/', [App\Http\Controllers\NFTController::class, 'index']);
         Route::post('/', [App\Http\Controllers\NFTController::class, 'store']);
-        Route::post('/{id}', [App\Http\Controllers\NFTController::class, 'update']);
+        Route::put('/{id}', [App\Http\Controllers\NFTController::class, 'update']);
+        Route::put('/{id}/transfer', [App\Http\Controllers\NFTController::class, 'transferNft']);
         Route::delete('/{id}', [App\Http\Controllers\NFTController::class, 'destroy']);
     });
 
@@ -79,7 +80,7 @@ Route::middleware([ValidToken::class])->group(function () {
     });
 
     Route::prefix('/nft-classification')->group(function () {
-        Route::get('/', [App\Http\Controllers\NFTController::class, 'getClassification']);
+        Route::get('/', [App\Http\Controllers\NFTController::class, 'getClassifications']);
         Route::post('/', [App\Http\Controllers\NFTController::class, 'addClassification']);
         Route::post('/{id}', [App\Http\Controllers\NFTController::class, 'updateClassification']);
         Route::delete('/{id}', [App\Http\Controllers\NFTController::class, 'removeClassification']);

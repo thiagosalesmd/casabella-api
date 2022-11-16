@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\NFT;
 use App\Models\NFTCategorie;
 use App\Models\NFTClassification;
+use App\Models\NFTUser;
 use Exception;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
@@ -32,11 +33,14 @@ class NFTController extends Controller
 
     public function store (Request $request)
     {
-        $validator = Validator::make($request->all(), [
+        $data = $request->all();
+        $validator = Validator::make($data, [
             'name' => 'required',
             'status' => 'in:ACTIVE,SUSPEND,INACTIVE',
             'description' => 'required',
             'image' => 'required',
+            'categories' => 'required',
+            'classifications' => 'required'
         ]);
 
         if ($validator->fails()) {
@@ -46,9 +50,17 @@ class NFTController extends Controller
             ], 400);
         }
 
+        $categories = $data['categories'];
+        $classification = $data['classifications'];
+        unset($data['categories']);
+        unset($data['classifications']);
+
         try {
             $NFT = NFT::create($request->all());
             return response()->json($NFT);
+
+            $NFT->categories()->sync($categories);
+            $NFT->classifications()->sync($classification);
         } catch (Exception $e) {
             return response()->json([
                 'messge' => 'Erro ao criar NFT',
@@ -58,11 +70,15 @@ class NFTController extends Controller
     }
     public function update ($id, Request $request)
     {
-        $validator = Validator::make($request->all(), [
+        $data = $request->all();
+        $validator = Validator::make($data, [
             'name' => 'required',
             'status' => 'in:ACTIVE,SUSPEND,INACTIVE',
             'description' => 'required',
+            'classification' => 'required',
+            'categories' => 'required'
         ]);
+
 
         if ($validator->fails()) {
             return response()->json([
@@ -71,9 +87,18 @@ class NFTController extends Controller
             ], 400);
         }
 
+        $categories = $data['categories'];
+        $classification = $data['classification'];
+        unset($data['categories']);
+        unset($data['classification']);
+
         try {
             $NFT = NFT::findOrFail($id);
             $NFT->update($request->all());
+
+            $NFT->categories()->sync($categories);
+            $NFT->classifications()->sync($classification);
+
             return response()->json($NFT);
         } catch (Exception $e) {
             return response()->json([
@@ -173,6 +198,19 @@ class NFTController extends Controller
             return response()->json(['message' => 'Deletado com sucesso !!']);
         } catch (Exception $e) {
             return response()->json(['error' => $e->getMessage(), 'message' => 'Erro ao gravar categoria'], 400);
+        }
+    }
+
+    public function transferNft ($id, Request $request)
+    {
+        $data = $request->all();
+        $user = auth()->guard('api')->user();
+        try {
+            $nft = NFT::findOrFail($id);
+            $transfer = NFTUser::create(array_merge($data, ['nft_id' => $nft->id, 'sender_id' => $user->id]));
+            return response()->json($transfer);
+        } catch (Exception $e) {
+            return response()->json(['error' => $e->getMessage(), 'message' => 'Erro ao transferir NFT'], 400);
         }
     }
 }
