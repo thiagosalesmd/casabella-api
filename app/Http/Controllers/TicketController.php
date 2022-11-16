@@ -76,9 +76,18 @@ class TicketController extends Controller
             ], 400);
         }
 
+        $attachments = isset($data['attachment']) ? $data['attachment'] : null;
+        unset($data['attachment']);
         try {
             $ticket = Ticket::findOrFail($ticketId);
             $ticket->update($data);
+            if ($attachments) {
+                $path = $request->file('attachment')->store('public/tickets/'.$ticket->id);
+                $ticketAttachment = TicketAttachment::create([
+                    'file' => $path,
+                    'ticket_id' => $ticket->id
+                ]);
+            }
             return response()->json($ticket);
         } catch (Exception $e) {
             return response()->json(['message' => $e->getMessage()], 400);
