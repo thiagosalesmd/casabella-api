@@ -186,6 +186,8 @@ return [
          * Package Service Providers...
          */
 
+        Musonza\Chat\ChatServiceProvider::class,
+
         /*
          * Application Service Providers...
          */
@@ -210,6 +212,7 @@ return [
 
     'aliases' => Facade::defaultAliases()->merge([
         // 'ExampleClass' => App\Example\ExampleClass::class,
+        'Chat' => Musonza\Chat\Facades\ChatFacade::class,
     ])->toArray(),
 
 ];

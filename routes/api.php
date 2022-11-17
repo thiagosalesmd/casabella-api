@@ -114,4 +114,15 @@ Route::middleware([ValidToken::class])->group(function () {
         Route::put('/{id}/comment', [App\Http\Controllers\PostController::class, 'comment']);
         Route::delete('/{id}', [App\Http\Controllers\PostController::class, 'destroy']);
     });
+
+    Route::prefix('/chat')->group(function () {
+        Route::get('/', [App\Http\Controllers\ChatController::class, 'index']);
+        Route::post('/', [App\Http\Controllers\ChatController::class, 'store']);
+        Route::get('/{id}', [App\Http\Controllers\ChatController::class, 'getChat']);
+        Route::get('/{id}/messages', [App\Http\Controllers\ChatController::class, 'getMessages']);
+        Route::put('/{id}', [App\Http\Controllers\ChatController::class, 'sendMessage']);
+        Route::put('/{id}/read', [App\Http\Controllers\ChatController::class, 'readMessage']);
+        Route::put('/{id}/meet', [App\Http\Controllers\ChatController::class, 'addParticipants']);
+        Route::put('/{id}/finish', [App\Http\Controllers\ChatController::class, 'finish']);
+    });
 });

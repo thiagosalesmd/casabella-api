@@ -7,13 +7,13 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
-//use Laravel\Sanctum\HasApiTokens;
 use Laravel\Passport\HasApiTokens;
+use Musonza\Chat\Traits\Messageable;
 
 class User extends Authenticatable
 {
     use HasApiTokens, HasFactory, Notifiable, SoftDeletes;
-
+    use Messageable;
     /**
      * The attributes that are mass assignable.
      *
@@ -56,5 +56,10 @@ class User extends Authenticatable
     public function categorie()
     {
         return $this->hasOne(Categorie::class, 'user_id', 'id');
+    }
+
+    public function group()
+    {
+        return $this->belongsToMany(Group::class, 'user_has_group', 'user_id', 'group_id');
     }
 }

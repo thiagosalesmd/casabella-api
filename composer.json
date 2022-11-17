@@ -12,7 +12,8 @@
         "laravel/passport": "^11.2",
         "laravel/sanctum": "^3.0",
         "laravel/tinker": "^2.7",
-        "matthewbdaly/laravel-azure-storage": "^2.0"
+        "matthewbdaly/laravel-azure-storage": "^2.0",
+        "musonza/chat": "^6.0"
     },
     "require-dev": {
         "fakerphp/faker": "^1.9.1",

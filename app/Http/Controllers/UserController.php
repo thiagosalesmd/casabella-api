@@ -16,20 +16,21 @@ use Illuminate\Support\Facades\Validator;
 
 class UserController extends Controller
 {
-    
+
     public function store(Request $request)
     {
-        
+
         $validator = Validator::make($request->all(), [
             'name' => 'required|min:3',
             'password' => 'required|min:6',
             'cpf' => 'required|numeric|min:11',
-            'email' => 'required|unique:users'
+            'email' => 'required|unique:users',
+            'group' => 'required'
         ]);
 
         if ($validator->fails()) {
             return response()->json([
-                'errors' => $validator->errors()->all(), 
+                'errors' => $validator->errors()->all(),
                 'message' => 'Desculpe, não foi possível cadastrar o usuário.'
             ], 400);
         }
@@ -53,7 +54,7 @@ class UserController extends Controller
             'phone' => isset($data['phone']) ? $data['phone'] : '',
             'is_whatsapp' => isset($data['is_whatsapp']) ? $data['is_whatsapp'] : false
         );
-        
+
         try {
             if (sizeof($dataAddress) > 0) {
                 if ( !isset($dataAddress['street']) ) {
@@ -64,14 +65,18 @@ class UserController extends Controller
             }
 
             $user = User::create($dataUser);
+            $user->group()->sync([$data['group']]);
+            $user->group;
+
             $dataPerson['user_id'] = $user->id;
-            
+
             $person = Person::create($dataPerson);
-            
+
             $person->user = $user;
             if ($address) {
                 $person->address = $address;
             }
+
             return response([ 'user' => $person ]);
         } catch (Exception $e) {
             return response()->json([
@@ -79,7 +84,7 @@ class UserController extends Controller
                 'error' => $e->getMessage()
             ], 401);
         }
-        
+
     }
 
 
@@ -88,11 +93,11 @@ class UserController extends Controller
         $users = Person::with('user');
         $perPage = $request->has('perPage') ? $request->perPage : 50;
         $page = $request->has('page') ? $request->page : 1;
-        
+
         if ($request->has('name')) {
             $users->where('name', 'like', '%'. $request->name. '%');
         }
-        
+
         if ($request->has('cpf')) {
             $users->where('cpf', 'like', '%'. $request->cpf. '%');
         }
@@ -127,21 +132,21 @@ class UserController extends Controller
         $validator = Validator::make($data, [
             'name' => 'required|min:3',
             'cpf' => 'required|numeric|min:11',
-            'email' => 'required'
+            'email' => 'required',
+            'group' => 'required'
         ]);
 
         if ($validator->fails()) {
             return response()->json([
-                'errors' => $validator->errors()->all(), 
+                'errors' => $validator->errors()->all(),
                 'message' => 'Desculpe, não foi possível atualizar o usuário.'
             ], 400);
         }
-        
+
         if (!$this->cpfIsValid($data['cpf'])) {
             return response()->json(['message' => 'Este CPF não é válido'], 400);
-        }     
-        
-        
+        }
+
         $person = Person::findOrFail($personId);
         $address = $person->address;
         $user = $person->user;
@@ -163,7 +168,7 @@ class UserController extends Controller
             'phone' => isset($data['phone']) ? (preg_replace( '/[^0-9]/is', '', $data['phone'])) : '',
             'is_whatsapp' => isset($data['is_whatsapp']) ? $data['is_whatsapp'] : false
         );
-        
+
         try {
             if (sizeof($dataAddress) > 0) {
                 if ( !isset($dataAddress['street']) ) {
@@ -174,14 +179,15 @@ class UserController extends Controller
                 } else {
                     $address = Adresses::create($dataAddress);
                 }
-                
+
                 $dataPerson['addres_id'] = $address->id;
             }
 
             $user->update($dataUser);
             $dataPerson['user_id'] = $user->id;
-            
+
             $person->update($dataPerson);
+            $user->group()->sync([$data['group']]);
             return response([ 'user' => $person ]);
 
         } catch (Exception $e) {
@@ -190,7 +196,7 @@ class UserController extends Controller
                 'error' => $e->getMessage()
             ], 401);
         }
-        
+
     }
 
     public function destroy ($personId)
@@ -208,11 +214,11 @@ class UserController extends Controller
 
     }
 
-    
+
 
     public function avatar($userId, Request $request)
     {
-        
+
         $user = User::findOrFail($userId);
 
         $validator = Validator::make($request->all(), [
@@ -221,7 +227,7 @@ class UserController extends Controller
 
         if ($validator->fails()) {
             return response()->json([
-                'errors' => $validator->errors()->all(), 
+                'errors' => $validator->errors()->all(),
                 'message' => 'Desculpe, não foi possível atualizar foto.'
             ], 400);
         }
@@ -235,7 +241,7 @@ class UserController extends Controller
         } catch (Exception $e) {
             return response()->json(['error'=> $e->getMessage()], 401);
         }
-        
+
         return response()->json(['message' => 'Erro ao atualizar imagem'], 400);
     }
 
@@ -249,23 +255,23 @@ class UserController extends Controller
 
         if ($validator->fails()) {
             return response()->json([
-                'errors' => $validator->errors()->all(), 
+                'errors' => $validator->errors()->all(),
                 'message' => 'Desculpe, não foi possível atualizar foto.'
             ], 400);
         }
 
         try {
-          
+
             $document = UserDocument::create([
                 'path' => $request->attachment,
                 'user_id' => $user->id
             ]);
-      
+
             return response()->json($document);
         } catch (Exception $e) {
             return response()->json(['error' => $e->getMessage()], 401);
         }
-        
+
         return response()->json(['message' => 'Erro ao atualizar imagem'], 400);
 
     }
