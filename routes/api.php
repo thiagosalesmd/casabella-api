@@ -125,4 +125,11 @@ Route::middleware([ValidToken::class])->group(function () {
         Route::put('/{id}/meet', [App\Http\Controllers\ChatController::class, 'addParticipants']);
         Route::put('/{id}/finish', [App\Http\Controllers\ChatController::class, 'finish']);
     });
+
+    Route::prefix('/floral')->group(function () {
+        Route::get('/', [App\Http\Controllers\FloralController::class, 'index']);
+        Route::post('/', [App\Http\Controllers\FloralController::class, 'store']);
+        Route::put('/{id}/status', [App\Http\Controllers\FloralController::class, 'update']);
+        Route::delete('/{id}', [App\Http\Controllers\FloralController::class, 'destroy']);
+    });
 });
