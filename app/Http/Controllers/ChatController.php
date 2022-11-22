@@ -19,7 +19,7 @@ class ChatController extends Controller
             $group = $user->group[0]->name;
         }
 
-        if (strtoupper($group) !== 'ADMINISTRADOR') {
+        if (strtoupper($group) !== 'ADMINISTRADORES') {
             $conversations->setParticipant($user);
         }
 

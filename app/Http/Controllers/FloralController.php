@@ -25,7 +25,7 @@ class FloralController extends Controller
             return response()->json(['message'=> 'usuário sem acesso'], 401);
         }
 
-        if (strtoupper($group) !== 'ADMINISTRADOR') {
+        if (strtoupper($group) !== 'ADMINISTRADORES') {
             $floral->where('recipient_id', $user->id);
         }
 
@@ -41,7 +41,7 @@ class FloralController extends Controller
             $floral->where('created_at', '<=', $request->endDate);
         }
         if ($request->has('accepted_at')) {
-            $floral->where('created_at', $request->accepted_at);
+            $floral->where('accepted_at', $request->accepted_at);
         }
 
         return response()->json(
