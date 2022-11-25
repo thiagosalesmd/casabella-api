@@ -10,6 +10,7 @@ use Illuminate\Auth\Events\PasswordReset;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Password;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Str;
@@ -19,8 +20,8 @@ class AuthController extends Controller
 
     public function login(Request $request)
     {
-
-        $validator = Validator::make($request->all(), [
+        $data = $request->all();
+        $validator = Validator::make($data, [
             'email' => 'email|required',
             'password' => 'required'
         ]);
@@ -32,12 +33,12 @@ class AuthController extends Controller
             ], 400);
         }
 
-        if (Auth::attempt($request->all())) {
+        if (Auth::attempt($data)) {
             $user = Auth::user();
             return response([
                 'token' => $user->createToken('madeFy')->accessToken,
                 'user' => $user->person
-            ], 401);
+            ]);
         }
 
         return response(['message' => 'usuaário e/ou senha inválidos'], 401);
@@ -66,7 +67,8 @@ class AuthController extends Controller
         $dataUser = array(
             'password' => bcrypt($data['password']),
             'name' => $data['name'],
-            'email' => $data['email']
+            'email' => $data['email'],
+            'nickname' => uniqid()
         );
         $dataPerson = array(
             'name' => $data['name'],
@@ -90,6 +92,9 @@ class AuthController extends Controller
 
             $person = Person::create($dataPerson);
 
+            if (Auth::attempt(['email' => $user->email, 'password' => $data['password']])) {
+                $user->createToken('madeFy')->accessToken;
+            }
             $token = $user->createToken('madeFy')->accessToken;
 
             return response([ 'user' => $person, 'token' => $token]);
