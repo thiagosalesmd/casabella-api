@@ -31,6 +31,10 @@ class PartnerController extends Controller
 
     public function store (Request $request)
     {
+        $user = auth()->guard('api')->user();
+        if (!$this->hasPermission($user, 'Cadastro Patrocinador')) {
+            return response()->json(['message' => 'Usuário sem permissão para esta ação!'], 401);
+        }
         $data = $request->all();
         $validator = Validator::make($data, [
             'name' => 'required|min:3'
@@ -53,6 +57,10 @@ class PartnerController extends Controller
 
     public function update ($id, Request $request)
     {
+        $user = auth()->guard('api')->user();
+        if (!$this->hasPermission($user, 'Cadastro Patrocinador')) {
+            return response()->json(['message' => 'Usuário sem permissão para esta ação!'], 401);
+        }
         $data = $request->all();
         $validator = Validator::make($data, [
             'name' => 'required|min:3'
@@ -76,6 +84,10 @@ class PartnerController extends Controller
 
     public function destroy($id)
     {
+        $user = auth()->guard('api')->user();
+        if (!$this->hasPermission($user, 'Cadastro Patrocinador')) {
+            return response()->json(['message' => 'Usuário sem permissão para esta ação!'], 401);
+        }
         try {
             $partner = Partner::findOrFail($id);
             $partner->delete();

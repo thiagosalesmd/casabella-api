@@ -11,7 +11,7 @@ class Person extends Model
     use HasFactory, SoftDeletes;
 
     protected $table = 'persons';
-    
+
     protected $fillable = [
         'name',
         'user_id',
@@ -20,7 +20,9 @@ class Person extends Model
         'birthdate',
         'phone',
         'is_whatsapp',
-        'address_id'
+        'address_id',
+        'approved_at',
+        'approved_by'
     ];
 
     protected $dates = ['deleted_at'];
@@ -34,7 +36,7 @@ class Person extends Model
     {
         return $this->hasOne(User::class, 'id', 'user_id');
     }
-   
+
     public function attachments ()
     {
         return $this->hasMany(UserDocument::class, 'user_id', 'user_id');

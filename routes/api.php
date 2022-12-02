@@ -21,10 +21,15 @@ Route::post('/forgot-password', [App\Http\Controllers\AuthController::class, 'fo
 Route::post('/reset-password', [App\Http\Controllers\AuthController::class, 'resetPasswordByToken']);
 
 Route::middleware([ValidToken::class])->group(function () {
+
     Route::post('/logout', [App\Http\Controllers\AuthController::class, 'logout']);
     Route::post('/change-password', [App\Http\Controllers\AuthController::class, 'changePassword']);
     Route::post('/me', [App\Http\Controllers\AuthController::class, 'me']);
     Route::post('/send-mail', [App\Http\Controllers\EmailController::class, 'sendEmailTo']);
+    Route::post('/my-avatar', [App\Http\Controllers\HomeController::class, 'myAvatar']);
+    Route::post('/my-florals', [App\Http\Controllers\HomeController::class, 'myFlorals']);
+    Route::post('/my-campaigns', [App\Http\Controllers\HomeController::class, 'myCampaigns']);
+    Route::post('/my-nfts', [App\Http\Controllers\HomeController::class, 'myNFTs']);
 
     Route::prefix('/users')->group(function () {
         Route::get('/', [App\Http\Controllers\UserController::class, 'index']);
@@ -65,10 +70,12 @@ Route::middleware([ValidToken::class])->group(function () {
     });
 
     Route::prefix('/nft')->group(function () {
+        Route::get('/audit', [App\Http\Controllers\NFTController::class, 'audit']);
         Route::get('/', [App\Http\Controllers\NFTController::class, 'index']);
         Route::post('/', [App\Http\Controllers\NFTController::class, 'store']);
         Route::put('/{id}', [App\Http\Controllers\NFTController::class, 'update']);
         Route::put('/{id}/transfer', [App\Http\Controllers\NFTController::class, 'transferNft']);
+        Route::put('/{id}/status', [App\Http\Controllers\NFTController::class, 'status']);
         Route::delete('/{id}', [App\Http\Controllers\NFTController::class, 'destroy']);
     });
 
@@ -129,6 +136,7 @@ Route::middleware([ValidToken::class])->group(function () {
     Route::prefix('/floral')->group(function () {
         Route::get('/', [App\Http\Controllers\FloralController::class, 'index']);
         Route::post('/', [App\Http\Controllers\FloralController::class, 'store']);
+        Route::get('/audit', [App\Http\Controllers\FloralController::class, 'audit']);
         Route::put('/{id}/status', [App\Http\Controllers\FloralController::class, 'update']);
         Route::delete('/{id}', [App\Http\Controllers\FloralController::class, 'destroy']);
     });

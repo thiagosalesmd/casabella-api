@@ -17,6 +17,11 @@ class Campaign extends Model
         'created_by'
     ];
 
+    public function terms()
+    {
+        return $this->belongsToMany(Term::class, 'campaigns_has_terms', 'campaign_id', 'term_id');
+    }
+
     public function categories()
     {
         return $this->belongsToMany(Categorie::class, 'campaigns_has_categories', 'campaign_id', 'categorie_id');

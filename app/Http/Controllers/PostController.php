@@ -15,6 +15,11 @@ class PostController extends Controller
         $perPage = $request->has('perPage') ? $request->perPage : 50;
         $page = $request->has('page') ? $request->page : 1;
 
+        $_user = auth()->guard('api')->user();
+        if (!$this->hasPermission($_user, 'Post')) {
+            return response()->json(['message' => 'Usuário sem premissão para esta ação!'], 401);
+        }
+
         $posts = Post::with('comments', 'categories', 'groups', 'users');
 
         return response()->json($posts->paginate($perPage, '*', null, $page));
@@ -22,8 +27,11 @@ class PostController extends Controller
 
     public function store (Request $request)
     {
+        $_user = auth()->guard('api')->user();
+        if (!$this->hasPermission($_user, 'Adicionar Post')) {
+            return response()->json(['message' => 'Usuário sem premissão para esta ação!'], 401);
+        }
         $data = $request->all();
-
         $validator = Validator::make($data, [
             'description' => 'required|min:3',
             'groups' => 'required',
@@ -60,6 +68,10 @@ class PostController extends Controller
 
     public function update ($postId, Request $request)
     {
+        $_user = auth()->guard('api')->user();
+        if (!$this->hasPermission($_user, 'Adicionar Post')) {
+            return response()->json(['message' => 'Usuário sem premissão para esta ação!'], 401);
+        }
         $data = $request->all();
         $validator = Validator::make($data, [
             'description' => 'required|min:3',
@@ -100,6 +112,10 @@ class PostController extends Controller
 
     public function comment ($postId, Request $request)
     {
+        $_user = auth()->guard('api')->user();
+        if (!$this->hasPermission($_user, 'Comentar Post')) {
+            return response()->json(['message' => 'Usuário sem premissão para esta ação!'], 401);
+        }
         $data = $request->all();
         $user = auth()->guard('api')->user();
         $validator = Validator::make($data, [

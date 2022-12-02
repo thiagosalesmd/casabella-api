@@ -29,9 +29,13 @@ class ValidToken
         }
 
         $user = Auth::guard('api')->user();
+        $person = $user->person;
         # verificao se o usuario está bloqueado.
         if (!$user->active) {
             return response()->json(['message' => 'usuário bloqueado!!'], 401);
+        }
+        if (!$person->approved_at) {
+            return response()->json(['message' => 'seu usuário está aguardando aprovação!!'], 401);
         }
         return $next($request);
     }

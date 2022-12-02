@@ -22,7 +22,7 @@ class AuthController extends Controller
     {
         $data = $request->all();
         $validator = Validator::make($data, [
-            'email' => 'email|required',
+            'email' => 'required',
             'password' => 'required'
         ]);
 
@@ -35,6 +35,21 @@ class AuthController extends Controller
 
         if (Auth::attempt($data)) {
             $user = Auth::user();
+            if ($user->status === 0) {
+                return response()->json(['message' => 'Usuário ainda não foi ativado/ aprovado'], 401);
+            }
+            $user->person;
+            $group = $user->group;
+            if (sizeof($group) === 0) {
+                return response()->json(['message' => 'Usuário sem grupo de acesso!!'], 401);
+            }
+
+            if (!$user->person->approved_at) {
+                return response()->json(['message' => 'Usuário aguardando aprovação!!'], 401);
+            }
+
+            $user->permissions = $group->rules;
+
             return response([
                 'token' => $user->createToken('madeFy')->accessToken,
                 'user' => $user->person
@@ -200,7 +215,7 @@ class AuthController extends Controller
 
     public function me ()
     {
-        $user = auth()->user();
+        $user = auth()->guard('api')->user();
         $person = $user->person;
         $person->address;
         $person->user = $user;

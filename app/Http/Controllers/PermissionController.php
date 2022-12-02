@@ -11,10 +11,14 @@ class PermissionController extends Controller
 {
     public function index (Request $request)
     {
+        $user = auth()->guard('api')->user();
+        if (!$this->hasPermission($user, 'Permissões')) {
+            return response()->json(['message' => 'Usuário sem permissão para esta ação!'], 401);
+        }
         $permissions = Permission::query();
         $perPage = $request->get('perPage') ? $request->perPage : 50;
         $page = $request->get('page') ? $request->page : 1;
-        
+
         if ($request->has('name')) {
             $permissions->where('name', 'like', '%'. $request->name .'%');
         }
@@ -24,6 +28,10 @@ class PermissionController extends Controller
 
     public function show ($id)
     {
+        $user = auth()->guard('api')->user();
+        if (!$this->hasPermission($user, 'Permissões')) {
+            return response()->json(['message' => 'Usuário sem permissão para esta ação!'], 401);
+        }
         $permissions = Permission::findOrFail($id);
         $permissions->rules;
 
@@ -32,6 +40,10 @@ class PermissionController extends Controller
 
     public function store(Request $request)
     {
+        $user = auth()->guard('api')->user();
+        if (!$this->hasPermission($user, 'Permissões')) {
+            return response()->json(['message' => 'Usuário sem permissão para esta ação!'], 401);
+        }
         $data = $request->all();
         $validator = Validator::make($data, [
             'name' => 'required|min:3'
@@ -39,7 +51,7 @@ class PermissionController extends Controller
 
         if ($validator->fails()) {
             return response()->json([
-                'errors' => $validator->errors()->all(), 
+                'errors' => $validator->errors()->all(),
                 'message' => 'Desculpe, não foi possível cadastrar permissão.'
             ], 400);
         }
@@ -54,6 +66,10 @@ class PermissionController extends Controller
 
     public function update($permissionId, Request $request)
     {
+        $user = auth()->guard('api')->user();
+        if (!$this->hasPermission($user, 'Permissões')) {
+            return response()->json(['message' => 'Usuário sem permissão para esta ação!'], 401);
+        }
         $data = $request->all();
         $validator = Validator::make($data, [
             'name' => 'required|min:3'
@@ -61,7 +77,7 @@ class PermissionController extends Controller
 
         if ($validator->fails()) {
             return response()->json([
-                'errors' => $validator->errors()->all(), 
+                'errors' => $validator->errors()->all(),
                 'message' => 'Desculpe, não foi possível cadastrar permissão.'
             ], 400);
         }
@@ -78,7 +94,7 @@ class PermissionController extends Controller
     public function destroy ($permissionId)
     {
         $permission = Permission::findOrFail($permissionId);
-        
+
         try {
             $permission->rules()->detach();
             $permission->delete();
@@ -86,7 +102,7 @@ class PermissionController extends Controller
         } catch (Exception $e) {
             return response()->json(['message' => $e->getMessage()], 400);
         }
-        
+
     }
 
 }

@@ -8,6 +8,7 @@ use App\Models\Adresses;
 use App\Models\Person;
 use App\Models\User;
 use App\Models\UserDocument;
+use Carbon\Carbon;
 use Exception;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
@@ -19,6 +20,10 @@ class UserController extends Controller
 
     public function store(Request $request)
     {
+        $user = auth()->guard('api')->user();
+        if (!$this->hasPermission($user, 'Usuário')) {
+            return response()->json(['message' => 'Usuário sem premissão para esta ação!'], 401);
+        }
 
         $validator = Validator::make($request->all(), [
             'name' => 'required|min:3',
@@ -52,7 +57,9 @@ class UserController extends Controller
             'cpf' => $data['cpf'],
             'rg' => isset($data['rg']) ? $data['rg']: '',
             'phone' => isset($data['phone']) ? $data['phone'] : '',
-            'is_whatsapp' => isset($data['is_whatsapp']) ? $data['is_whatsapp'] : false
+            'is_whatsapp' => isset($data['is_whatsapp']) ? $data['is_whatsapp'] : false,
+            'approved_at' => Carbon::now(),
+            'approved_by' => $user->id
         );
 
         try {
@@ -90,6 +97,11 @@ class UserController extends Controller
 
     public function index (Request $request)
     {
+        $user = auth()->guard('api')->user();
+        if (!$this->hasPermission($user, 'Usuário')) {
+            return response()->json(['message' => 'Usuário sem premissão para esta ação!'], 401);
+        }
+
         $users = Person::with('user');
         $perPage = $request->has('perPage') ? $request->perPage : 50;
         $page = $request->has('page') ? $request->page : 1;
@@ -127,6 +139,10 @@ class UserController extends Controller
 
     public function update ($personId, Request $request)
     {
+        $_user = auth()->guard('api')->user();
+        if (!$this->hasPermission($_user, 'Usuário')) {
+            return response()->json(['message' => 'Usuário sem premissão para esta ação!'], 401);
+        }
 
         $data = $request->all();
         $validator = Validator::make($data, [
@@ -201,6 +217,7 @@ class UserController extends Controller
 
     public function destroy ($personId)
     {
+
         $person = Person::findOrFail($personId);
         $user = $person->user;
         try {
@@ -213,8 +230,6 @@ class UserController extends Controller
         }
 
     }
-
-
 
     public function avatar($userId, Request $request)
     {
@@ -247,6 +262,10 @@ class UserController extends Controller
 
     public function attachments($userId, Request $request)
     {
+        $_user = auth()->guard('api')->user();
+        if (!$this->hasPermission($_user, 'Usuário')) {
+            return response()->json(['message' => 'Usuário sem premissão para esta ação!'], 401);
+        }
         $user = User::findOrFail($userId);
 
         $validator = Validator::make($request->all(), [

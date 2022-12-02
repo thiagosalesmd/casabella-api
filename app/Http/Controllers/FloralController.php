@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Floral;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Validator;
 
@@ -13,6 +14,10 @@ class FloralController extends Controller
     public function index (Request $request)
     {
         $user = auth()->guard('api')->user();
+        if (!$this->hasPermission($user, 'Floral')) {
+            return response()->json(['message' => 'Usuário sem permissão para esta ação!'], 401);
+        }
+
         $perPage = $request->has('perPage') ? $request->perPage : 50;
         $page = $request->has('page') ? $request->page : 1;
 
@@ -53,6 +58,9 @@ class FloralController extends Controller
     public function store (Request $request)
     {
         $user = auth()->guard('api')->user();
+        if (!$this->hasPermission($user, 'Movimentação de Floral')) {
+            return response()->json(['message' => 'Usuário sem permissão para esta ação!'], 401);
+        }
         $data = $request->all();
 
          $validator = Validator::make($data, [
@@ -95,6 +103,10 @@ class FloralController extends Controller
 
     public function update($id, Request $request)
     {
+        $user = auth()->guard('api')->user();
+        if (!$this->hasPermission($user, 'Movimentação de Floral')) {
+            return response()->json(['message' => 'Usuário sem permissão para esta ação!'], 401);
+        }
         $floral = Floral::findOrFail($id);
         if (!$request->has('status')) {
             return response()->json(['message' => 'STATUS não informado'], 400);
@@ -103,8 +115,10 @@ class FloralController extends Controller
         if ($request->status === 'ACCEPTED') {
             $floral->accepted_at = Carbon::now();
         }
+
         try {
             $floral->save();
+
             return response()->json($floral);
         } catch (\Exception $e) {
             return response()->json(['message' => $e->getMessage(), 400]);
@@ -113,6 +127,10 @@ class FloralController extends Controller
 
     public function destroy($id)
     {
+        $user = auth()->guard('api')->user();
+        if (!$this->hasPermission($user, 'Movimentação de Floral')) {
+            return response()->json(['message' => 'Usuário sem permissão para esta ação!'], 401);
+        }
         $floral = Floral::findOrFail($id);
         if ($floral->status !== 'PENDING') {
             return response()->json(['message' => 'Esta transação não pode mais ser deletada.'], 400);
@@ -124,5 +142,17 @@ class FloralController extends Controller
         } catch (\Exception $e) {
             return response()->json(['message' => $e->getMessage()], 400);
         }
+    }
+
+    public function audit(Request $request)
+    {
+        $audit = DB::table('florals_transactions');
+        $from = $request->has('startDate') ? $request->startDate : Carbon::now()->subDays(30)->startOfDay();
+        $to = $request->has('endDate') ? $request->endDate : Carbon::now()->endOfDay();
+
+        $audit->where('created_at', '>=', $from);
+        $audit->where('created_at', '<=', $to);
+
+        return response()->json($audit);
     }
 }

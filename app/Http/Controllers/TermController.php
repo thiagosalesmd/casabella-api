@@ -20,11 +20,19 @@ class TermController extends Controller
             $terms->where('name', 'like', '%'. $request->name .'%');
         }
 
+        if ($request->has('type')) {
+            $terms->where('type', $request->type);
+        }
+
         return response()->json($terms->paginate($perPage, ['*'], null, $page));
     }
 
     public function store(Request $request)
     {
+        $user = auth()->guard('api')->user();
+        if (!$this->hasPermission($user, 'Termos')) {
+            return response()->json(['message' => 'Usuário sem premissão para esta ação!'], 401);
+        }
         $validator = Validator::make($request->all(), [
             'name' => 'required',
             'description' => 'required',

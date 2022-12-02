@@ -5,11 +5,12 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use App\Models\UUID;
+use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Facades\DB;
 
 class Floral extends Model
 {
-    use HasFactory, UUID;
+    use HasFactory, SoftDeletes, UUID;
 
     protected $table = 'florals';
 
@@ -22,6 +23,8 @@ class Floral extends Model
         'observation',
         'accepted_at'
     ];
+
+    protected $dates = ['deleted_at'];
 
     public function sender ()
     {

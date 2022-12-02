@@ -62,4 +62,6 @@ class User extends Authenticatable
     {
         return $this->belongsToMany(Group::class, 'user_has_group', 'user_id', 'group_id');
     }
+
+
 }

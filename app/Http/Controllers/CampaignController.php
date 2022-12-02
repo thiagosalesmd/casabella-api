@@ -16,8 +16,25 @@ class CampaignController extends Controller
         $perPage = $request->has('perPage') ? $request->perPage: 50;
         $page = $request->has('page') ? $request->page : 1;
 
-        $campaigns = Campaign::with('categories', 'groups', 'user_id');
+        $campaigns = Campaign::with('categories', 'groups', 'users', 'terms');
 
+        $_user = auth()->guard('api')->user();
+
+        if ($request->hasHeader('admin')) {
+            if (!$this->hasPermission($_user, 'Campanhas')) {
+                return response()->json(['message' => 'Usuário sem premissão para esta ação!'], 401);
+            }
+        } else {
+            $campaigns->whereHas('users', function($q) use($_user) {
+                $q->where('user_id', $_user->id);
+            })->orWhereHas('groups',  function($q) use($_user) {
+                $groups = $_user->groups;
+                $q->where('group_id', $groups[0]->id);
+            })->orWhereHas('categories',  function($q) use($_user) {
+                $categorie = $_user->categories;
+                $q->where('categorie_id', $categorie[0]->id);
+            });
+        }
         if ($request->has('title')) {
             $campaigns->where('title', 'like', '%'. $request->title. '%');
         }
@@ -30,11 +47,15 @@ class CampaignController extends Controller
     public function store (Request $request)
     {
         $user = auth()->guard('api')->user();
-        $data = $request->all();
 
+        if (!$this->hasPermission($user, 'Campanhas')) {
+            return response()->json(['message' => 'Usuário sem premissão para esta ação!'], 401);
+        }
+        $data = $request->all();
         $validator = Validator::make($data, [
             'title' => 'required',
-            'categories' => 'required'
+            'categories' => 'required',
+            'term_id' => 'required|numeric'
         ]);
 
         if ($validator->fails()) {
@@ -44,9 +65,19 @@ class CampaignController extends Controller
             ], 400);
         }
 
+        $categories = $data['categories'];
+        $users = $data['users'];
+        $groups = $data['groups'];
+        $termId = $data['term_id'];
+        unset($data['users']);
+        unset($data['groups']);
+        unset($data['term_id']);
 
         try {
             $campaign = Campaign::create(array_merge($data, ["created_by" => $user->id] ));
+
+            $campaign->terms()->sync([$termId]);
+
             $this->syncCategorie($campaign, $data['categories']);
 
             if (isset($data['groups'])) {
@@ -73,7 +104,8 @@ class CampaignController extends Controller
             'title' => 'required',
             'categories' => 'required',
             'groups' => 'required',
-            'users' => 'required'
+            'users' => 'required',
+            'term_id' => 'required',
         ]);
 
         if ($validator->fails()) {
@@ -86,8 +118,10 @@ class CampaignController extends Controller
         $categories = $data['categories'];
         $users = $data['users'];
         $groups = $data['groups'];
+        $termId = $data['term_id'];
         unset($data['users']);
         unset($data['groups']);
+        unset($data['term_id']);
 
         try {
             $campaign = Campaign::findOrFail($campaignId);
@@ -96,6 +130,8 @@ class CampaignController extends Controller
             $Users = $campaign->users;
 
             $campaign->update($data);
+
+            $campaign->terms()->sync([$termId]);
 
             if ($Categories) {
                 $this->syncCategorie($campaign, $categories);

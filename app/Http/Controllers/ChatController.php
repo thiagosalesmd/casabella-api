@@ -11,7 +11,11 @@ class ChatController extends Controller
 {
     public function index (Request $request)
     {
+
         $user = auth()->guard('api')->user();
+        if (!$this->hasPermission($user, 'Chat')) {
+            return response()->json(['message' => 'Usuário sem permissão para esta ação!'], 401);
+        }
         $conversations = Chat::conversations();
 
         $group = '';
@@ -39,6 +43,10 @@ class ChatController extends Controller
 
     public function store(Request $request)
     {
+        $user = auth()->guard('api')->user();
+        if (!$this->hasPermission($user, 'Chat')) {
+            return response()->json(['message' => 'Usuário sem permissão para esta ação!'], 401);
+        }
         $data = $request->all();
         $user = auth()->guard('api')->user();
         $conversation = Chat::createConversation([$user])->makePrivate();
@@ -49,7 +57,10 @@ class ChatController extends Controller
 
     public function addParticipants($chatId, Request $request)
     {
-
+        $user = auth()->guard('api')->user();
+        if (!$this->hasPermission($user, 'Chat')) {
+            return response()->json(['message' => 'Usuário sem permissão para esta ação!'], 401);
+        }
         $conversation = Chat::conversations()->getById($chatId);
         $add = Chat::conversation($conversation)->addParticipants($request->users);
         return response()->json($add);
@@ -57,6 +68,10 @@ class ChatController extends Controller
 
     public function sendMessage($chatId, Request $request)
     {
+        $user = auth()->guard('api')->user();
+        if (!$this->hasPermission($user, 'Chat')) {
+            return response()->json(['message' => 'Usuário sem permissão para esta ação!'], 401);
+        }
         $user = auth()->guard('api')->user();
         $conversation = Chat::conversations()->getById($chatId);
         $message = Chat::message($request->message)
@@ -68,12 +83,20 @@ class ChatController extends Controller
 
     public function getMessages($chatId)
     {
+        $user = auth()->guard('api')->user();
+        if (!$this->hasPermission($user, 'Chat')) {
+            return response()->json(['message' => 'Usuário sem permissão para esta ação!'], 401);
+        }
         return response()->json(
             Chat::messages()->getById($chatId)
         );
     }
     public function getChat($chatId)
     {
+        $user = auth()->guard('api')->user();
+        if (!$this->hasPermission($user, 'Chat')) {
+            return response()->json(['message' => 'Usuário sem permissão para esta ação!'], 401);
+        }
         return response()->json(
             Chat::conversations()->getById($chatId)
         );
@@ -86,6 +109,10 @@ class ChatController extends Controller
 
     public function readMessage($chatId)
     {
+        $user = auth()->guard('api')->user();
+        if (!$this->hasPermission($user, 'Chat')) {
+            return response()->json(['message' => 'Usuário sem permissão para esta ação!'], 401);
+        }
         $user = auth()->guard('api')->user;
         $conversation = Chat::conversations()->getById($chatId);
         $conversation->setParticipant($user)->readAll();
@@ -94,6 +121,10 @@ class ChatController extends Controller
 
     public function finish ($chatId)
     {
+        $user = auth()->guard('api')->user();
+        if (!$this->hasPermission($user, 'Chat')) {
+            return response()->json(['message' => 'Usuário sem permissão para esta ação!'], 401);
+        }
         $settings = ['mute_mentions' => true, 'mute_conversation' => true];
         $conversation = Chat::conversations()->getById($chatId);
         $user = auth()->guard('api')->user;
