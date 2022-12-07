@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Adresses;
 use App\Models\Person;
 use App\Models\User;
+use App\Models\UserDocument;
 use Exception;
 use Illuminate\Auth\Events\PasswordReset;
 use Illuminate\Http\Request;
@@ -65,8 +66,9 @@ class AuthController extends Controller
         $validator = Validator::make($request->all(), [
             'name' => 'required|min:3',
             'password' => 'required|min:6',
-            'cpf' => 'required|numeric|min:11',
-            'email' => 'required|unique:users'
+            'cpf' => 'required|unique:persons',
+            'email' => 'required|unique:users',
+            'attachments' => 'required',
         ]);
 
         if ($validator->fails()) {
@@ -102,7 +104,19 @@ class AuthController extends Controller
                 $dataPerson['addres_id'] = $address->id;
             }
 
+            if ($request->has('avatar')) {
+                $dataUser['avatar'] = $request->avatar;
+            }
+
             $user = User::create($dataUser);
+
+            foreach ($data['attachments'] as $attachment) {
+                UserDocument::create([
+                    'path' => $attachment['attachment'],
+                    'user_id' => $user->id
+                ]);
+            }
+
             $dataPerson['user_id'] = $user->id;
 
             $person = Person::create($dataPerson);
